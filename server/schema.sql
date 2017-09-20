@@ -1,4 +1,4 @@
-
+-- drop database chat;
 
 CREATE DATABASE chat;
 
@@ -27,19 +27,19 @@ USE chat;
 
  CREATE TABLE room_names (
  id  INT AUTO_INCREMENT NOT NULL,
- Name VARCHAR(20) ,
+ roomname VARCHAR(20) ,
  PRIMARY KEY (id)
  );
 
  CREATE TABLE user (
  id  INT AUTO_INCREMENT NOT NULL,
- user CHAR(20) ,
+ username CHAR(20) ,
  PRIMARY KEY (id)
  );
 
  CREATE TABLE messages (
  id  INT AUTO_INCREMENT NOT NULL,
- message CHAR(20) ,
+ text CHAR(30) ,
  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
  userID INT ,
  roomID INT ,
