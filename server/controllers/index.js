@@ -1,4 +1,5 @@
 var models = require('../models/index');
+var mysql = require('mysql');
 var app = require('../app');
 var db = require('../db/index.js');
 var express = require('express');
@@ -52,25 +53,19 @@ module.exports = {
       var message = obj.text;
       var roomname = obj.roomname;
 
-      module.exports.users.getUserID(username, (err, userResult) => {
-        if (userResult.length === 0){
-          console.log('i dont exist');
-          // call post
-          module.exports.users.getRoomID(roomname, (err, roomResult) => {
-            // check room id
-            if (roomResult.length === 0){
-              // 
-            } else {
+      module.exports.users.postUserID(username, (err, userResult) => {
 
-            }
+        var userID = userResult;
+        module.exports.users.postRoomID(roomname, (err, roomResult) => {
+          // check room id
+          var roomID = roomResult;
+            // call post to add messages, with message, userResult, roomResult
+            var messageQ = `insert into messages (text, userID, roomID) values (${mysql.escape(message)}, ${mysql.escape(userID)}, ${mysql.escape(roomID)})`;
+            db.connection.query(messageQ, (err, result) => {
+              console.log('err>>>>>>>>>>>>>>>>>>>>', err);
+            });
+
           });
-        } else {
-          module.exports.users.getRoomID(roomname, (err, roomResult) => {
-            // check room id
-          });
-        }
-
-
       });
 
 
@@ -84,35 +79,53 @@ module.exports = {
     // Ditto as above
     get: function (req, res) {
 
-
     },
-    getUserID: function(param, callback) {
-      console.log('param', param);
+    getUserID: function(username, callback) {
+      console.log('username', username);
       // var userQ = 'select exists(select user.id from user where user.username="'+param+'";';
-      var userQ = 'select user.id from user where user.username="'+param+'"';
-      db.connection.query(userQ, (err, result) => {
+      var userQ = `select user.id from user where user.username=${mysql.escape(username)}`;
+      db.connection.query(userQ, (err, userID) => {
        if (err) throw err;
-       callback(err, result);
+
+       callback(err, userID);
       });
     },
-    getRoomID: function(param, callback) {
-      console.log('param', param);
+    getRoomID: function(roomname, callback) {
+      // console.log('roomID', roomID);
       // var userQ = 'select exists(select user.id from user where user.username="'+param+'";';
-      var userQ = 'select room.id from room_names where room_names.roomname="'+param+'"';
-      db.connection.query(userQ, (err, result) => {
+      var userQ = `select room.id from room_names where room_names.roomname=${mysql.escape(roomname)}`;
+      db.connection.query(userQ, (err, roomID) => {
        if (err) throw err;
-       callback(err, result);
+       callback(err, roomID);
       });
     },
     post: function (req, res) {
 
-      // insert into tablename
     },
-    postRoomID: function(){
+    postRoomID: function(roomname, callback){
+      var roomQ = `insert into room_names (roomname) values (${mysql.escape(roomname)})`;
+      db.connection.query(roomQ, (err, result) => {
+        if (result.insertId === 0){ // doesnt exists
+          getRoomID(roomname, (err, result) => {
+            callback(err, result);
+          });
+        } else {
+          callback(err, result.insertId);
+        }
 
+      });
     },
-    postUserID: function(){
-
+    postUserID: function(username, callback){
+      var userQ = `insert into user (username) values (${mysql.escape(username)})`;
+      db.connection.query(userQ, (err, result) => {
+        if (result.insertId === 0){ // doesnt exists
+          getRoomID(username, (err, result) => {
+            callback(err, result);
+          });
+        } else {
+          callback(err, result.insertId);
+        }
+      });
     }
   }
 };
